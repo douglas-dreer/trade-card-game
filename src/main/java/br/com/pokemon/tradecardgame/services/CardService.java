@@ -46,10 +46,11 @@ public class CardService {
         try {
             final String URI = String.format("%s/cards", URL_BASE);
             ResponseEntity<Deck> results = restTemplate.getForEntity(URI, Deck.class);
-            if(results.getStatusCode().is2xxSuccessful()) {
+            if(results.getBody() == null || results.getBody().getCards().isEmpty()) {
+                throw new Exception(("404 - Não Houve resultados"));
+            } else if(results.getStatusCode().is2xxSuccessful()) {
                 cards = results.getBody().getCards();
-               // cards = Arrays.asList(results.getBody());
-            } else if( results.getStatusCode().is5xxServerError()) {
+            } else {
                 throw new Exception("500 - Erro Interno");
             }
         } catch (UnknownHostException e) {
