@@ -3,60 +3,45 @@ package br.com.pokemon.tradecardgame.services;
 
 import br.com.pokemon.tradecardgame.entities.Card;
 import br.com.pokemon.tradecardgame.entities.Deck;
-import br.com.pokemon.tradecardgame.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CardService {
 
-    private static final String PROXY_SERVER_HOST = "proxy.tcs.com";
-    private static final int PROXY_SERVER_PORT = 8080;
     private static final  String URL_BASE = "https://api.pokemontcg.io/v1";
     private static final Logger LOGGER = LoggerFactory.getLogger(CardService.class);
 
-    private Utils utils;
-    private HashMap<String, List<String>> mapHeaders;
     private RestTemplate restTemplate;
 
     @PostConstruct
     public void initialize() {
-        utils = new Utils();
-        mapHeaders = new HashMap<>();
-        mapHeaders.put("Accept", Arrays.asList(MediaType.APPLICATION_JSON.toString()));
-        Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(PROXY_SERVER_HOST, PROXY_SERVER_PORT));
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        //requestFactory.setProxy(proxy);
-        restTemplate = new RestTemplate(requestFactory);
+        restTemplate = new RestTemplate();
     }
 
-    public List<Card> findAll() {
+    public List<Card> findAll(Integer pagina, Integer quantidade) {
         List<Card> cards = new ArrayList<>();
+        ResponseEntity<Deck> results = null;
         try {
-            final String URI = String.format("%s/cards", URL_BASE);
-            ResponseEntity<Deck> results = restTemplate.getForEntity(URI, Deck.class);
-            if(results.getBody() == null || results.getBody().getCards().isEmpty()) {
-                throw new Exception(("404 - Não Houve resultados"));
-            } else if(results.getStatusCode().is2xxSuccessful()) {
+            final String URI = String.format("%s/cards?page=%s&page&&pageSize=%s", URL_BASE, pagina, quantidade);
+            results = restTemplate.getForEntity(URI, Deck.class);
+
+            if(!results.getBody().getCards().isEmpty()) {
                 cards = results.getBody().getCards();
-            } else {
-                throw new Exception("500 - Erro Interno");
             }
-        } catch (UnknownHostException e) {
+
+        } catch (HttpClientErrorException e) {
             LOGGER.error(e.getLocalizedMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         return cards;
     }
@@ -64,11 +49,11 @@ public class CardService {
     public Card findById(String id) {
         Card result = new Card();
         try {
+            RestTemplate restTemplate = new RestTemplate();
             final String URI = String.format("%s/cards/{id}", URL_BASE);
-            ResponseEntity<Card[]> results = restTemplate.getForEntity(URL_BASE, Card[].class, id);
+            ResponseEntity<Card[]> results = restTemplate.getForEntity(URI, Card[].class, id);
             if(results.getStatusCode().is2xxSuccessful()) {
-                List<Card> cards = new ArrayList<>();
-                cards = Arrays.asList(results.getBody());
+                List<Card> cards = Arrays.asList(results.getBody());
                 Optional<Card> card = cards.stream().filter(item -> id.equals(item.getId())).findFirst();
                 result = !card.isEmpty() ? card.get() : null;
             } else if( results.getStatusCode().is5xxServerError()) {
@@ -79,6 +64,7 @@ public class CardService {
         }
         return result;
     }
+
 
     public List<Card> findByName(String name) {
         List<Card> cards = new ArrayList<>();
