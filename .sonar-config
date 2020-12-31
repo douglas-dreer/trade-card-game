@@ -1,0 +1,7 @@
+sonar.host.url = http://localhost:9000
+sonar.projectKey = br.com.pokemon:tradecardgame
+sonar.login=admin
+sonar.password=Qe0a13SzDrwj
+sonar.links.scm=https://github.com/douglas-dreer/trade-card-game.git
+sonar.coverage.jacoco.xmlReportPaths
+sonar.junit.reportPaths

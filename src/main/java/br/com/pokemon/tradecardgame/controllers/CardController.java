@@ -10,23 +10,19 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("v1/pokemon/tcg")
+@RequestMapping("v1/pokemon/tcg/cards")
 public class CardController {
 
     @Autowired
     private CardService service;
 
-    @GetMapping(path = "cards", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path= "", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public ResponseEntity<List<Card>> list() {
-        List<Card> result = service.findAll();
-        return !result.isEmpty() ? ResponseEntity.ok(result) : ResponseEntity.notFound().build();
-    }
-
-    @ResponseBody
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<Card>> findByName(@RequestParam(name = "name", required = true) String name) {
-        List<Card> result = service.findByName(name);
+    public ResponseEntity<List<Card>> list(
+            @RequestParam(value = "pagina", defaultValue = "1") Integer pagina,
+            @RequestParam(value = "quantidade", defaultValue = "100") Integer quantidade)
+    {
+        List<Card> result = service.findAll(pagina, quantidade);
         return !result.isEmpty() ? ResponseEntity.ok(result) : ResponseEntity.notFound().build();
     }
 
@@ -36,8 +32,6 @@ public class CardController {
         Card result = service.findById(id);
         return result != null ? ResponseEntity.ok(result) : ResponseEntity.notFound().build();
     }
-
-
 
 
 }
